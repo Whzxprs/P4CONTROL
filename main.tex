@@ -393,39 +393,119 @@ El objetivo de control fue manipular el paso de aire por la válvula para que la
 
 En la Figura \ref{fig:skid_fisico} se observa el skid utilizado en laboratorio. A la izquierda se identifica la zona de instrumentación y la válvula de control; al centro se encuentran el tanque pulmón y el tanque principal; y a la derecha se ubica el panel de operación con rotámetros y manómetros. El sistema permite modificar tanto la entrada como la salida de aire, por lo que es posible provocar cambios en la dinámica del proceso y observar la respuesta del controlador.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{figuras/tanques_general.jpeg}
+\caption{Vista frontal del sistema: válvula de control, tanque pulmón, tanque principal, rotámetros y panel de operación}
+\label{fig:tanques_general}
+\end{figure}
+
+La Figura \ref{fig:tanques_general} permite identificar con mayor claridad la distribución física del sistema. En la parte izquierda se aprecia la válvula de control neumática y su instrumentación asociada; al centro se observa el tanque pulmón de menor volumen y, a su derecha, el tanque principal. En el panel negro se ubican los rotámetros y manómetros utilizados para establecer condiciones de entrada y salida de aire durante la sintonización.
+
 % -----------------------------------------------------------
-\subsection*{Lazo de Control Implementado}
+\subsection*{DTI del Sistema de Tanques}
 
-El lazo de control implementado puede representarse mediante la siguiente secuencia:
+El DTI elaborado durante la práctica se replicó en TikZ para representar de forma ordenada el flujo de aire, los tanques, la instrumentación y las señales de control. El croquis original se conserva como referencia en la Figura \ref{fig:dti_referencia}.
 
-\begin{center}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figuras/dti_referencia.jpeg}
+\caption{Croquis de referencia del DTI elaborado durante la práctica}
+\label{fig:dti_referencia}
+\end{figure}
+
+\begin{figure}[H]
+\centering
 \resizebox{0.98\textwidth}{!}{%
 \begin{tikzpicture}[
-    node distance=1.15cm,
-    block/.style={draw, rounded corners, align=center, minimum height=0.9cm, minimum width=2.3cm, fill=softgray},
-    line/.style={-Latex, thick}
+    pipe/.style={draw=blue!65, very thick},
+    signal/.style={draw=controlgreen, very thick, -Latex},
+    ctrl/.style={draw=yellow!70!black, very thick, dashed},
+    vessel/.style={draw=red!70!black, very thick, minimum width=1.6cm, minimum height=4.4cm, align=center},
+    tankbig/.style={draw=red!70!black, very thick, minimum width=2.3cm, minimum height=5.6cm, align=center},
+    inst/.style={draw=controlgreen, very thick, circle, minimum size=1.35cm, align=center, fill=white},
+    lab/.style={font=\small},
+    valve/.style={draw=black, very thick, bowtie, minimum width=0.9cm, minimum height=0.55cm, fill=white}
 ]
-    \node[block] (air) {Entrada\\de aire};
-    \node[block, right=of air] (rotin) {Rotámetro\\de entrada};
-    \node[block, right=of rotin] (valve) {Válvula\\de control};
-    \node[block, right=of valve] (tank) {Tanque\\pulmón};
-    \node[block, below=1.1cm of tank] (main) {Tanque\\principal};
-    \node[block, right=of tank] (rotout) {Rotámetro\\de salida};
-    \node[block, below=1.1cm of valve] (ip) {Transductor\\I/P};
-    \node[block, below=1.1cm of rotin] (pid) {PID\\DeltaV};
-    \node[block, below=1.1cm of air] (pt) {Transmisor\\de presión};
+    \tikzset{
+        bowtie/.style={
+            path picture={
+                \draw[very thick] (path picture bounding box.south west) -- (path picture bounding box.center) -- (path picture bounding box.north west);
+                \draw[very thick] (path picture bounding box.south east) -- (path picture bounding box.center) -- (path picture bounding box.north east);
+            }
+        }
+    }
 
-    \draw[line] (air) -- (rotin);
-    \draw[line] (rotin) -- (valve);
-    \draw[line] (valve) -- (tank);
-    \draw[line] (tank) -- (rotout);
-    \draw[line] (tank) -- (main);
-    \draw[line] (tank) |- node[pos=0.25,right]{\small PV} (pt);
-    \draw[line] (pt) -- node[above]{\small 4--20 mA} (pid);
-    \draw[line] (pid) -- node[above]{\small salida} (ip);
-    \draw[line] (ip) -- node[right]{\small señal neumática} (valve);
+    % Equipos principales
+    \node[vessel] (tk01) at (0,0) {TK-01};
+    \node[tankbig] (tk02) at (5.6,0.2) {TK-02};
+
+    % Línea principal de entrada y salida
+    \draw[pipe,-Latex] (-4.7,-3.1) -- (-3.1,-3.1) node[midway, below=0.18cm, lab]{Entrada de aire};
+    \node[valve] (pcv) at (-2.45,-3.1) {};
+    \node[below=0.58cm of pcv, lab, text=controlgreen] {PCV-101};
+    \draw[pipe] (-2.0,-3.1) -- (tk01.south west);
+    \draw[pipe] (tk01.north) -- ++(0,1.1) -| (-2.45,-1.0);
+    \node[valve] (vin) at (-2.45,-1.0) {};
+    \node[inst] (fi) at (-0.1,3.4) {FI\\101};
+    \draw[pipe] (-2.45,-0.72) |- (fi.west);
+
+    % Interconexión entre tanques
+    \draw[pipe] (tk01.north east) -- ++(0.9,0) |- (2.7,-0.15);
+    \node[valve] (vinter) at (2.7,-0.15) {};
+    \draw[pipe] (2.7,-0.45) |- (tk02.west);
+
+    % Venteos/manifold superior de TK-02
+    \draw[pipe] (tk02.north west) -- ++(0,1.1) -- ++(1.4,0);
+    \node[valve] (vtop1) at (4.95,3.2) {};
+    \node[valve] (vtop2) at (6.25,3.2) {};
+    \draw[pipe] (vtop1) -- ++(0,-0.75);
+    \draw[pipe] (vtop2) -- ++(0,-0.75);
+    \draw[pipe] (6.25,3.2) -- ++(1.65,0) |- (8.6,1.9);
+
+    % Salida
+    \node[valve] (vout) at (8.6,1.9) {};
+    \draw[pipe,-Latex] (vout) -- ++(1.25,0) node[right, lab]{Salida};
+    \node[inst] (pst) at (9.1,4.1) {PST\\102};
+    \draw[signal] (pst.south) -- (vout.north);
+
+    % Controlador y señal
+    \node[inst] (pc) at (-4.6,1.6) {PC\\101};
+    \draw[ctrl] (pc.south) |- (pcv.west);
+    \draw[ctrl] (pc.north) -- ++(0,2.3) -- ++(12.2,0) -- (pst.west);
+
+    % Etiquetas de línea
+    \node[lab, align=center] at (3.25,-1.15) {Válvula de\\interconexión};
+    \node[lab, above] at (5.6,3.55) {Válvulas superiores};
 \end{tikzpicture}
 }
+\caption{DTI replicado del sistema de control de presión en tanques}
+\label{fig:dti_tikz}
+\end{figure}
+
+En la Figura \ref{fig:dti_tikz}, las líneas azules representan el recorrido físico del aire, las líneas verdes representan señales de medición o instrumentación asociada y la línea amarilla punteada representa la señal de control. El controlador PC-101 recibe la información de presión del sistema y actúa sobre la válvula PCV-101 para regular la entrada de aire al tanque pulmón.
+
+\begin{center}
+\small
+\begin{tabular}{>{\bfseries}p{2.8cm} p{10cm}}
+\toprule
+\textbf{Elemento} & \textbf{Descripción funcional} \\
+\midrule
+PCV-101 & Válvula de control de entrada. Modula el paso de aire hacia el sistema de tanques de acuerdo con la salida del controlador. \\
+\addlinespace
+PC-101 & Controlador de presión implementado en DeltaV. Compara SP contra PV y genera la CV que gobierna la válvula de control. \\
+\addlinespace
+FI-101 & Indicador de flujo asociado a la entrada del sistema. Permite verificar la condición de alimentación de aire durante la práctica. \\
+\addlinespace
+TK-01 & Tanque pulmón. Es el recipiente donde se busca regular la presión y amortiguar cambios rápidos de flujo. \\
+\addlinespace
+TK-02 & Tanque principal conectado al tanque pulmón. Aumenta el volumen del sistema y modifica su respuesta dinámica. \\
+\addlinespace
+PST-102 & Transmisor/interruptor de presión de salida. Proporciona referencia de presión para supervisión y protección del sistema. \\
+\addlinespace
+Rotámetros & Instrumentos de entrada y salida utilizados para ajustar manualmente los flujos y generar perturbaciones controladas. \\
+\bottomrule
+\end{tabular}
 \end{center}
 
 El transmisor entrega la variable de proceso (PV) al DCS. El bloque PID compara la PV con el punto de ajuste (SP) y genera una variable de control (CV). La CV se aplica al transductor I/P, el cual permite que la señal del controlador sea compatible con la válvula neumática. De esta forma, el DCS no actúa directamente sobre el flujo de aire, sino sobre la posición de la válvula que condiciona la entrada al tanque pulmón.
@@ -495,99 +575,35 @@ Esta prueba permitió distinguir entre un problema de sintonía y una limitació
 
 La respuesta observada indica que los parámetros de sintonía fueron adecuados para mantener una buena relación entre la variable de proceso, la variable de control y el set point. La etapa manual permitió encontrar una región de operación estable, mientras que el modo automático permitió comprobar que el PID podía corregir perturbaciones y sostener la presión deseada en el tanque pulmón.
 
-Las siguientes gráficas representan de forma cualitativa el comportamiento observado durante la práctica: operación estable en el rango útil, corrección de la salida de control y pérdida de capacidad cuando se exige un set point fuera del alcance del sistema.
+\subsection*{Evidencia Fotográfica e Interpretación}
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.92\textwidth,
-    height=6.2cm,
-    grid=major,
-    xlabel={Tiempo [min]},
-    ylabel={Presión [psia]},
-    ymin=25,
-    ymax=46,
-    xmin=0,
-    xmax=20,
-    legend pos=south east,
-    tick align=outside
-]
-\addplot[controlgreen, dotted, thick] coordinates {
-    (0,30) (5,30) (5,35) (10,35) (10,40) (15,40) (15,45) (20,45)
-};
-\addlegendentry{SP}
-\addplot[uaqblue, thick, mark=*] coordinates {
-    (0,28) (1,29.2) (2,29.8) (3,30.1) (4,30.0) (5,30.0)
-    (6,32.4) (7,34.0) (8,35.1) (9,35.0) (10,35.0)
-    (11,37.2) (12,39.1) (13,40.0) (14,39.8) (15,40.0)
-    (16,41.0) (17,41.6) (18,41.8) (19,41.7) (20,41.8)
-};
-\addlegendentry{PV}
-\end{axis}
-\end{tikzpicture}
-\caption{Respuesta cualitativa de la presión ante cambios de set point y prueba de límite}
-\label{fig:presion_lab}
+\begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[height=7.0cm]{figuras/detalle_valvula.jpeg}
+    \small (a) Válvula neumática de control
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[height=7.0cm]{figuras/detalle_panel_rotametros.jpeg}
+    \small (b) Panel de rotámetros y manómetros
+\end{minipage}
+\caption{Detalles de campo utilizados durante la sintonización del lazo}
+\label{fig:detalles_campo}
 \end{figure}
+
+En la Figura \ref{fig:detalles_campo}(a) se observa la válvula neumática que actúa como elemento final de control. Su posición modifica el flujo de aire de entrada al tanque pulmón y, por lo tanto, permite que el controlador corrija la presión. En la Figura \ref{fig:detalles_campo}(b) se muestra el panel de rotámetros y manómetros; estos elementos permitieron establecer condiciones de entrada y salida, además de generar perturbaciones para probar la sintonía del PID.
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.92\textwidth,
-    height=6.2cm,
-    grid=major,
-    xlabel={Tiempo [min]},
-    ylabel={Salida del controlador [\%]},
-    ymin=20,
-    ymax=105,
-    xmin=0,
-    xmax=20,
-    legend pos=north west,
-    tick align=outside
-]
-\addplot[controlgreen, thick, mark=square*] coordinates {
-    (0,35) (1,42) (2,45) (3,44) (4,43) (5,43)
-    (6,55) (7,62) (8,60) (9,58) (10,58)
-    (11,70) (12,76) (13,74) (14,72) (15,72)
-    (16,88) (17,96) (18,100) (19,100) (20,100)
-};
-\addlegendentry{CV}
-\end{axis}
-\end{tikzpicture}
-\caption{Comportamiento cualitativo de la variable de control ante mayor exigencia de presión}
-\label{fig:salida_controlador}
+\includegraphics[width=0.92\textwidth]{figuras/hmi_prueba_pid.jpeg}
+\caption{Monitoreo del lazo en DeltaV durante una prueba de operación}
+\label{fig:hmi_prueba}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.92\textwidth,
-    height=6.2cm,
-    grid=major,
-    xlabel={Tiempo [min]},
-    ylabel={Flujo relativo [\%]},
-    ymin=0,
-    ymax=110,
-    xmin=0,
-    xmax=20,
-    legend pos=south east,
-    tick align=outside
-]
-\addplot[uaqblue, thick] coordinates {
-    (0,45) (5,45) (6,55) (10,55) (11,65) (15,65) (16,80) (20,80)
-};
-\addlegendentry{Entrada por rotámetro}
-\addplot[red, dashed, thick] coordinates {
-    (0,40) (5,40) (6,50) (10,50) (11,60) (15,60) (16,85) (20,85)
-};
-\addlegendentry{Salida por rotámetro}
-\end{axis}
-\end{tikzpicture}
-\caption{Cambios relativos de entrada y salida de aire usados para modificar la dinámica del sistema}
-\label{fig:flujos_lab}
-\end{figure}
+En la Figura \ref{fig:hmi_prueba} se aprecia el seguimiento del lazo desde el DCS DeltaV. El \textit{faceplate} permite observar simultáneamente SP, PV y CV, además del modo de operación. Esta pantalla fue fundamental para decidir cuándo el sistema podía pasar de modo manual a modo automático y para detectar si la salida del controlador se acercaba a saturación durante las pruebas de límite.
 
 \newpage
 
@@ -615,7 +631,7 @@ Los resultados esperados deben mostrar estabilidad, presión cercana al punto de
 
 \subsection*{2.- Reporte escrito de toda la práctica}
 
-El presente documento integra el marco conceptual de controladores, la selección del tipo de controlador, la configuración de parámetros PI, el dimensionamiento del tanque pulmón de nitrógeno, la práctica física realizada en el sistema de tanques de aire, la evidencia fotográfica del montaje, el uso del DCS DeltaV y las gráficas de comportamiento del sistema.
+El presente documento integra el marco conceptual de controladores, la selección del tipo de controlador, la configuración de parámetros PI, el dimensionamiento del tanque pulmón de nitrógeno, la práctica física realizada en el sistema de tanques de aire, la evidencia fotográfica del montaje, el DTI del sistema y el uso del DCS DeltaV durante la sintonización del lazo.
 
 \subsection*{3.- Conclusiones}
 
@@ -628,6 +644,18 @@ La capacidad del suministro, de 80,000 SCFH, es el doble de la demanda nominal. 
 En la práctica física se comprobó que el control de presión depende tanto de la sintonización del PID como de la capacidad real del proceso. El ajuste manual de los rotámetros permitió modificar la dinámica del sistema y encontrar una región donde la salida de control pudiera actuar sin saturarse. Después, al pasar el controlador a modo automático, el DCS DeltaV mantuvo la presión del tanque pulmón cercana al set point mediante la acción sobre el transductor I/P y la válvula de entrada de aire.
 
 La prueba de límites mostró que, cuando se solicita un set point fuera de la capacidad del sistema, el controlador puede incrementar la salida pero no necesariamente lograr que la PV alcance el SP. Por ello, una buena respuesta de control requiere una relación adecuada entre PV, CV y SP, además de una instalación física con suficiente presión de suministro, rango de válvula y ajuste correcto de entrada y salida de aire.
+
+\subsection*{Conclusiones Individuales}
+
+\textbf{Luis Fernando Pérez Tellez.} La práctica permitió comprender que la sintonización de un controlador no depende únicamente de modificar valores en el PID, sino de conocer primero el comportamiento físico del proceso. Al ajustar los rotámetros y observar la respuesta del tanque pulmón, se identificó la importancia de trabajar dentro de una región donde la válvula conserve capacidad de acción.
+
+\textbf{Jesus Pablo Arteaga Silva.} El uso del DCS DeltaV facilitó observar la relación entre el set point, la variable de proceso y la salida del controlador. El \textit{faceplate} del PID fue una herramienta clave para interpretar si el sistema respondía de manera estable y para decidir el momento adecuado de pasar de modo manual a modo automático.
+
+\textbf{Braulio Iván Gómez Ortiz.} El sistema de tanques mostró que el volumen del proceso influye directamente en la dinámica de presión. El tanque pulmón ayudó a amortiguar cambios rápidos, mientras que la conexión con el tanque principal modificó la rapidez de respuesta. Esto confirma que la selección de parámetros debe considerar la capacidad y la inercia real del proceso.
+
+\textbf{Joselyn Gallegos Abreo.} La prueba de límites permitió distinguir entre un problema de sintonización y una limitación física del sistema. Cuando el set point se colocó fuera de la capacidad del banco, el controlador incrementó su salida, pero la presión no pudo alcanzar el valor deseado. Esto demuestra que el control automático también depende del dimensionamiento correcto de los elementos de campo.
+
+\textbf{Luis Alejandro Zeron Marin.} La práctica integró instrumentación, control e interpretación de diagramas de tubería e instrumentación. Replicar el DTI ayudó a relacionar cada componente físico con su función dentro del lazo: transmisor, controlador, transductor I/P, válvula y tanques. Con ello se reforzó la importancia de documentar el sistema antes de analizar su respuesta.
 
 \newpage
 
