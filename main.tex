@@ -1,0 +1,643 @@
+\documentclass[12pt,letterpaper]{article}
+
+% Paquetes necesarios
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage[hidelinks]{hyperref}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+\pgfplotsset{compat=1.18}
+
+% Configuración de página
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm,
+    headheight=14pt
+}
+
+% Configuración de encabezado y pie de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Control de Procesos Industriales}
+\fancyhead[R]{\small Práctica \#4}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Configuración de espaciado
+\setstretch{1.15}
+
+\definecolor{uaqblue}{RGB}{26,64,112}
+\definecolor{controlgreen}{RGB}{28,118,92}
+\definecolor{softgray}{RGB}{245,247,250}
+
+\begin{document}
+
+% Portada
+\begin{titlepage}
+    \centering
+
+    \includegraphics[width=0.75\textwidth]{LOGOS.png}
+
+    \vspace{2cm}
+
+    {\LARGE\bfseries Universidad Autónoma de Querétaro\par}
+    \vspace{0.5cm}
+    {\Large Facultad de Ingeniería\par}
+    \vspace{3cm}
+
+    {\LARGE\bfseries Control de Procesos Industriales\par}
+    \vspace{1cm}
+    {\Large\textit{Práctica 04: Instrumentación: Controladores}\par}
+    \vspace{1.5cm}
+
+    {\large Zeron Marin Luis Alejandro \quad 262792\par}
+
+    \vfill
+
+    {\large Ing. Ramón Antonio González Hernández\par}
+    \vspace{1cm}
+    {\large Fecha: 25 de mayo de 2026\par}
+
+\end{titlepage}
+
+\pagestyle{fancy}
+
+% ============================================================
+% OBJETIVO
+% ============================================================
+\section*{Objetivo}
+
+Que el alumno identifique, adquiera el conocimiento y habilidad en el manejo, configuración e instalación de los controladores dentro del campo de la instrumentación de los procesos industriales.
+
+% ============================================================
+% ACTIVIDADES
+% ============================================================
+\section*{Actividades}
+
+\textbf{1.- Seminario de teoría y práctica donde se expliquen y comprendan los siguientes conceptos:}
+
+\begin{itemize}[noitemsep]
+    \item Definición de controlador.
+    \item Características y tipos de controladores.
+    \item Definición de los parámetros de configuración proporcional, derivativo e integral.
+    \item Terminología y definiciones conceptuales aplicables a la instrumentación y al control de procesos.
+\end{itemize}
+
+% -----------------------------------------------------------
+\subsection*{Controlador}
+
+Un controlador es el elemento del lazo de control que compara la variable de proceso medida con el valor deseado o punto de ajuste, y calcula una acción correctiva para reducir el error. En instrumentación industrial, el controlador recibe la señal del transmisor, ejecuta una ley de control y entrega una señal de salida hacia el elemento final de control, normalmente una válvula, variador, resistencia, bomba o actuador \cite{smith2006}.
+
+La variable controlada se identifica como PV (\textit{process variable}), el punto de ajuste como SP (\textit{set point}), la señal manipulada como MV (\textit{manipulated variable}) y el error como:
+
+\begin{equation}
+    e(t)=SP(t)-PV(t)
+\end{equation}
+
+% -----------------------------------------------------------
+\subsection*{Características y Tipos de Controladores}
+
+Los controladores se clasifican por su principio de operación, por la ley de control que ejecutan y por su integración dentro del sistema de instrumentación. En la industria de procesos se emplean controladores neumáticos, electrónicos, digitales, PLC, DCS y controladores embebidos en instrumentos Smart.
+
+\begin{center}
+\begin{tabular}{>{\bfseries}p{4.0cm} p{9.0cm}}
+\toprule
+\textbf{Tipo} & \textbf{Características principales} \\
+\midrule
+Neumático & Opera con señales de 3--15 psi. Es robusto y adecuado para áreas donde se desea evitar instrumentación eléctrica. \\
+\addlinespace
+Electrónico analógico & Opera con señales de 4--20 mA o 1--5 V. Permite mayor precisión y respuesta más rápida que el control neumático. \\
+\addlinespace
+Digital & Ejecuta algoritmos de control por software. Facilita alarmas, tendencias, comunicación, autodiagnóstico y ajuste remoto. \\
+\addlinespace
+PLC/DCS & Integra control de múltiples lazos, secuencias, interlocks, históricos y supervisión desde HMI o sala de control. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Según la acción de control, los tipos más comunes son:
+
+\begin{itemize}[itemsep=0.3em]
+    \item \textbf{On-Off:} Actúa en dos estados. Es simple, pero genera oscilación alrededor del punto de ajuste.
+    \item \textbf{Proporcional (P):} La salida cambia proporcionalmente al error. Mejora la respuesta, aunque puede dejar error permanente.
+    \item \textbf{Proporcional-Integral (PI):} Elimina el error permanente mediante acción integral. Es el más usado en lazos de presión, flujo, nivel y temperatura.
+    \item \textbf{Proporcional-Integral-Derivativo (PID):} Agrega anticipación por derivada. Se usa cuando se requiere mejorar la respuesta transitoria y el proceso permite medir sin ruido excesivo.
+\end{itemize}
+
+% -----------------------------------------------------------
+\subsection*{Parámetros de Configuración de Controladores}
+
+La forma paralela ideal del controlador PID se expresa como \cite{ogata2010}:
+
+\begin{equation}
+    m(t)=K_c\left[e(t)+\frac{1}{T_i}\int_0^t e(\tau)d\tau + T_d\frac{de(t)}{dt}\right] + m_0
+\end{equation}
+
+donde $m(t)$ es la salida del controlador, $K_c$ es la ganancia proporcional, $T_i$ es el tiempo integral, $T_d$ es el tiempo derivativo y $m_0$ es la salida de sesgo.
+
+\begin{center}
+\begin{tabular}{>{\bfseries}p{3.8cm} p{9.2cm}}
+\toprule
+\textbf{Parámetro} & \textbf{Efecto en el lazo de control} \\
+\midrule
+Ganancia proporcional $K_c$ & Aumenta la fuerza de corrección ante un error. Si es demasiado baja, el sistema responde lento; si es demasiado alta, puede oscilar. \\
+\addlinespace
+Tiempo integral $T_i$ & Corrige el error acumulado y elimina el offset. Un $T_i$ muy pequeño puede producir sobreimpulso y oscilación. \\
+\addlinespace
+Tiempo derivativo $T_d$ & Anticipa cambios rápidos del error. Ayuda en algunos procesos lentos, pero amplifica ruido de medición. \\
+\addlinespace
+Banda proporcional PB & Forma alternativa de expresar la ganancia: $PB=100/K_c$ cuando $K_c$ se expresa en unidades normalizadas. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------
+\subsection*{Terminología Aplicable a Control de Procesos}
+
+\begin{itemize}[itemsep=0.25em]
+    \item \textbf{PV:} Variable medida del proceso.
+    \item \textbf{SP:} Valor deseado de operación.
+    \item \textbf{MV:} Variable manipulada por el controlador.
+    \item \textbf{Offset:} Error permanente entre PV y SP.
+    \item \textbf{Perturbación:} Cambio externo que afecta el proceso, por ejemplo una variación de demanda.
+    \item \textbf{Tiempo muerto:} Retardo entre una acción de control y su efecto visible en la variable medida.
+    \item \textbf{Constante de tiempo:} Tiempo característico de respuesta del proceso ante un cambio.
+    \item \textbf{Sobreimpulso:} Exceso temporal de la PV por encima del SP después de una corrección.
+    \item \textbf{Estabilidad:} Capacidad del sistema para regresar a una condición controlada sin oscilación creciente.
+\end{itemize}
+
+\newpage
+
+% ============================================================
+% CASO 1
+% ============================================================
+\section*{Caso 1: Sistema Teórico de Control de Presión}
+
+\subsection*{Descripción del Proceso}
+
+Se propone un sistema de control de presión para un tanque pulmón de nitrógeno destinado al suministro de soplado en una tubería de transporte de pellets de polímero hacia silos de almacenamiento. El tanque pulmón funciona como volumen amortiguador: almacena gas comprimido, reduce fluctuaciones de presión y permite que el controlador mantenga el suministro dentro de un margen seguro.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.6cm,
+    block/.style={draw, rounded corners, align=center, minimum height=1.0cm, minimum width=2.6cm, fill=softgray},
+    inst/.style={draw, circle, align=center, minimum size=1.1cm, fill=white},
+    valve/.style={draw, regular polygon, regular polygon sides=3, shape border rotate=90, minimum size=0.9cm, fill=white},
+    line/.style={-Latex, thick}
+]
+    \node[block] (supply) {Suministro\\N$_2$\\80,000 SCFH};
+    \node[valve, right=1.5cm of supply] (pcv) {};
+    \node[above=0.15cm of pcv] {\small PCV};
+    \node[block, right=1.6cm of pcv, minimum width=2.9cm] (tank) {Tanque pulmón\\SP = 115 psig};
+    \node[block, right=1.6cm of tank] (load) {Transporte\\de pellets\\40,000 SCFH};
+    \node[inst, above=1.7cm of tank] (pt) {PT};
+    \node[inst, above=1.7cm of pcv] (pic) {PIC};
+
+    \draw[line] (supply) -- (pcv);
+    \draw[line] (pcv) -- (tank);
+    \draw[line] (tank) -- (load);
+    \draw[line] (tank) -- (pt);
+    \draw[line] (pt) -- node[above]{\small 4--20 mA} (pic);
+    \draw[line] (pic) -- node[right]{\small 4--20 mA} (pcv);
+\end{tikzpicture}
+\caption{Configuración propuesta del lazo de control de presión en tanque pulmón de nitrógeno}
+\label{fig:lazo_presion}
+\end{figure}
+
+% -----------------------------------------------------------
+\subsection*{Datos del Problema}
+
+\begin{center}
+\begin{tabular}{>{\bfseries}p{5cm} p{7cm}}
+\toprule
+\textbf{Variable} & \textbf{Valor} \\
+\midrule
+Fluido & Nitrógeno \\
+Temperatura & 65 $^\circ$F \\
+Presión de operación & 115 psig \\
+Flujo requerido & 40,000 SCFH \\
+Tiempo de arranque & 10 min \\
+Límite mínimo antes de paro & $-3\%$ de la presión de operación \\
+Capacidad del suministro & 80,000 SCFH a 115 psig \\
+Tubería & 3 pulgadas, cédula 40, longitud 80 m \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La presión mínima permisible antes del paro del sistema es:
+
+\begin{equation}
+    P_{min}=115(1-0.03)=111.55\ \text{psig}
+\end{equation}
+
+El margen disponible de presión es:
+
+\begin{equation}
+    \Delta P=115-111.55=3.45\ \text{psi}
+\end{equation}
+
+En presión absoluta:
+
+\begin{equation}
+    P_1=115+14.7=129.7\ \text{psia}
+\end{equation}
+
+\begin{equation}
+    P_2=111.55+14.7=126.25\ \text{psia}
+\end{equation}
+
+% -----------------------------------------------------------
+\subsection*{Selección del Controlador}
+
+Para un tanque pulmón de gas se recomienda utilizar un controlador PI de presión. La acción proporcional corrige cambios inmediatos de presión y la acción integral elimina el error permanente. La acción derivativa no se considera necesaria como ajuste inicial porque la medición de presión puede contener ruido y porque el volumen del tanque ya aporta amortiguamiento al proceso.
+
+La configuración propuesta es:
+
+\begin{center}
+\begin{tabular}{>{\bfseries}p{4.4cm} p{8.4cm}}
+\toprule
+\textbf{Elemento} & \textbf{Configuración recomendada} \\
+\midrule
+Controlador & PI digital o controlador de presión en PLC/DCS \\
+Variable controlada & Presión del tanque pulmón \\
+Punto de ajuste & 115 psig \\
+Acción de control & Inversa para válvula de entrada aire-abre: si baja la presión, aumenta la salida del controlador \\
+Salida del controlador & 4--20 mA hacia posicionador o convertidor I/P de la válvula PCV \\
+Alarma baja & 111.55 psig \\
+Paro por baja presión & Igual o menor a 111.55 psig, con retardo de seguridad definido por operación \\
+Ganancia inicial $K_c$ & 2.0 \\
+Tiempo integral $T_i$ & 60 s \\
+Tiempo derivativo $T_d$ & 0 s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Estos parámetros se consideran valores iniciales de arranque. El ajuste final debe obtenerse mediante prueba de escalón en el skid o por identificación del proceso, verificando estabilidad, bajo sobreimpulso y recuperación rápida ante cambios de demanda.
+
+% -----------------------------------------------------------
+\subsection*{Dimensionamiento del Tanque Pulmón}
+
+Se dimensiona el volumen conservador requerido suponiendo que durante el arranque el tanque debe sostener el flujo de demanda durante 10 minutos sin que la presión caiga más de 3\%. El volumen estándar requerido es:
+
+\begin{equation}
+    V_{std}=Q\,t=(40{,}000\ \text{SCFH})\left(\frac{10}{60}\ \text{h}\right)=6{,}666.7\ \text{SCF}
+\end{equation}
+
+Para un gas ideal en un tanque de volumen fijo:
+
+\begin{equation}
+    V_{std}=V_{tanque}\left(\frac{P_1-P_2}{P_{std}}\right)\left(\frac{T_{std}}{T_{tanque}}\right)
+\end{equation}
+
+Despejando el volumen físico del tanque:
+
+\begin{equation}
+    V_{tanque}=V_{std}\left(\frac{P_{std}}{P_1-P_2}\right)\left(\frac{T_{tanque}}{T_{std}}\right)
+\end{equation}
+
+Con $P_{std}=14.7$ psia, $T_{std}=60+459.67=519.67\,^\circ R$ y $T_{tanque}=65+459.67=524.67\,^\circ R$:
+
+\begin{equation}
+    V_{tanque}=6{,}666.7\left(\frac{14.7}{3.45}\right)\left(\frac{524.67}{519.67}\right)
+\end{equation}
+
+\begin{equation}
+    V_{tanque}=28{,}700\ \text{ft}^3
+\end{equation}
+
+Conversión a metros cúbicos:
+
+\begin{equation}
+    V_{tanque}=28{,}700(0.0283168)=812.8\ \text{m}^3
+\end{equation}
+
+La tubería de 3 pulgadas cédula 40 tiene diámetro interno aproximado de 3.068 pulgadas. Su volumen físico es:
+
+\begin{equation}
+    V_{tuberia}=\frac{\pi D_i^2}{4}L
+\end{equation}
+
+\begin{equation}
+    V_{tuberia}=\frac{\pi(0.2557\ \text{ft})^2}{4}(262.47\ \text{ft})=13.47\ \text{ft}^3
+\end{equation}
+
+El gas utilizable de la línea dentro del margen de 3.45 psi es aproximadamente:
+
+\begin{equation}
+    V_{std,linea}=13.47\left(\frac{3.45}{14.7}\right)\left(\frac{519.67}{524.67}\right)=3.13\ \text{SCF}
+\end{equation}
+
+La contribución de la tubería es despreciable frente a los 6,666.7 SCF requeridos durante el arranque. Por lo tanto, si se exige autonomía completa del tanque durante 10 minutos con solo 3\% de caída de presión, el volumen necesario resulta muy grande y poco práctico.
+
+\subsection*{Interpretación de Ingeniería}
+
+El suministro disponible tiene capacidad de 80,000 SCFH, mientras que el consumo del proceso es de 40,000 SCFH. Esto significa que, con el suministro activo, existe una reserva de capacidad del 100\% respecto a la demanda. Por ello, la función principal del tanque no debe ser sostener por sí solo los 10 minutos de consumo, sino amortiguar variaciones rápidas mientras la válvula de control y el suministro corrigen la presión.
+
+Para asegurar que el sistema no pare por baja presión se recomienda:
+
+\begin{itemize}[itemsep=0.25em]
+    \item Mantener la válvula PCV dimensionada para al menos 80,000 SCFH a las condiciones de operación.
+    \item Operar normalmente alrededor de 50\% de apertura para conservar margen de corrección.
+    \item Configurar alarma baja antes del paro, por ejemplo a 113 psig, y paro a 111.55 psig.
+    \item Ejecutar arranque gradual del transporte de pellets para evitar demanda instantánea máxima.
+    \item Ajustar el controlador PI con prueba de escalón para evitar oscilación y caída excesiva de presión.
+\end{itemize}
+
+\newpage
+
+% ============================================================
+% CASO 2
+% ============================================================
+\section*{Caso 2: Práctica Física en el Sistema de Tanques}
+
+\subsection*{Descripción del Sistema}
+
+En la práctica se desarrolló el control de un sistema de aire. El arreglo consistía en una entrada de aire condicionada por un rotámetro, una válvula de control encargada de regular la entrada de aire, un tanque pulmón conectado a un tanque principal y una salida también condicionada por otro rotámetro.
+
+El objetivo de control fue manipular el paso de aire por la válvula para que la presión del tanque pulmón alcanzara y mantuviera una presión previamente definida. Para ello se utilizó el DCS DeltaV, el cual recibe la señal analógica de un transmisor de presión conectado al tanque pulmón. Esta medición entra a un bloque PID; el controlador calcula una salida de control y la envía hacia un transductor I/P, que convierte la señal eléctrica en señal neumática para accionar la válvula de entrada de aire.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.64\textwidth]{figuras/skid_tanques.jpeg}
+\caption{Sistema físico de tanques, rotámetros, válvula de control e instrumentación neumática}
+\label{fig:skid_fisico}
+\end{figure}
+
+En la Figura \ref{fig:skid_fisico} se observa el skid utilizado en laboratorio. A la izquierda se identifica la zona de instrumentación y la válvula de control; al centro se encuentran el tanque pulmón y el tanque principal; y a la derecha se ubica el panel de operación con rotámetros y manómetros. El sistema permite modificar tanto la entrada como la salida de aire, por lo que es posible provocar cambios en la dinámica del proceso y observar la respuesta del controlador.
+
+% -----------------------------------------------------------
+\subsection*{Lazo de Control Implementado}
+
+El lazo de control implementado puede representarse mediante la siguiente secuencia:
+
+\begin{center}
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.15cm,
+    block/.style={draw, rounded corners, align=center, minimum height=0.9cm, minimum width=2.3cm, fill=softgray},
+    line/.style={-Latex, thick}
+]
+    \node[block] (air) {Entrada\\de aire};
+    \node[block, right=of air] (rotin) {Rotámetro\\de entrada};
+    \node[block, right=of rotin] (valve) {Válvula\\de control};
+    \node[block, right=of valve] (tank) {Tanque\\pulmón};
+    \node[block, below=1.1cm of tank] (main) {Tanque\\principal};
+    \node[block, right=of tank] (rotout) {Rotámetro\\de salida};
+    \node[block, below=1.1cm of valve] (ip) {Transductor\\I/P};
+    \node[block, below=1.1cm of rotin] (pid) {PID\\DeltaV};
+    \node[block, below=1.1cm of air] (pt) {Transmisor\\de presión};
+
+    \draw[line] (air) -- (rotin);
+    \draw[line] (rotin) -- (valve);
+    \draw[line] (valve) -- (tank);
+    \draw[line] (tank) -- (rotout);
+    \draw[line] (tank) -- (main);
+    \draw[line] (tank) |- node[pos=0.25,right]{\small PV} (pt);
+    \draw[line] (pt) -- node[above]{\small 4--20 mA} (pid);
+    \draw[line] (pid) -- node[above]{\small salida} (ip);
+    \draw[line] (ip) -- node[right]{\small señal neumática} (valve);
+\end{tikzpicture}
+}
+\end{center}
+
+El transmisor entrega la variable de proceso (PV) al DCS. El bloque PID compara la PV con el punto de ajuste (SP) y genera una variable de control (CV). La CV se aplica al transductor I/P, el cual permite que la señal del controlador sea compatible con la válvula neumática. De esta forma, el DCS no actúa directamente sobre el flujo de aire, sino sobre la posición de la válvula que condiciona la entrada al tanque pulmón.
+
+% -----------------------------------------------------------
+\subsection*{Procedimiento de Operación y Sintonía}
+
+Primero se puso en marcha el sistema y se monitoreó su comportamiento dinámico. Durante esta etapa se ajustaron manualmente la entrada y la salida de aire mediante los rotámetros, con el propósito de observar cómo respondía la presión del tanque pulmón ante cambios de flujo.
+
+Después se trabajó con la salida del controlador en modo manual para encontrar una condición de operación adecuada. En esta etapa se buscó una apertura de válvula capaz de sostener la presión sin saturar la salida de control y que, además, pudiera tolerar cambios en la dinámica del sistema. Posteriormente se realizaron perturbaciones modificando los rotámetros, con el objetivo de probar la sintonización del controlador.
+
+Una vez encontrada una respuesta adecuada, el controlador se pasó a modo automático. En esta condición el bloque PID fue capaz de mantener el set point definido, corrigiendo la posición de la válvula cuando la presión se alejaba del valor deseado. Toda la etapa de monitoreo se realizó con el \textit{faceplate} del PID en DeltaV, desde donde se observaron el SP, la PV, la CV, el modo de operación, las alarmas y los parámetros de sintonía.
+
+% -----------------------------------------------------------
+\subsection*{Parámetros y Evidencia en DeltaV}
+
+\begin{center}
+\small
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{4.6cm} >{\raggedright\arraybackslash}p{7.8cm}}
+\toprule
+\textbf{Variable} & \textbf{Condición observada en la práctica} \\
+\midrule
+Fluido de trabajo & Aire comprimido \\
+Elemento de medición & Transmisor de presión conectado al tanque pulmón \\
+Sistema de control & DCS DeltaV con bloque PID \\
+Interfaz de operación & \textit{Faceplate} del PID \\
+Elemento de conversión & Transductor I/P \\
+Elemento final de control & Válvula neumática de entrada de aire \\
+Manipulación del proceso & Rotámetro de entrada y rotámetro de salida \\
+Rango principal de prueba & 30--40 psia \\
+Modo de ajuste inicial & Manual \\
+Modo final de operación & Automático \\
+Ganancia registrada & $K_c=2.00$ \\
+Reset registrado & 4.0 s \\
+Rate registrado & 0.0 s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figuras/hmi_tendencia_pid.jpeg}
+\caption{Faceplate y tendencia del bloque PID en DeltaV durante la etapa de monitoreo}
+\label{fig:hmi_tendencia}
+\end{figure}
+
+En la Figura \ref{fig:hmi_tendencia} se observa el \textit{faceplate} del controlador PID. La pantalla permite identificar el punto de ajuste, la variable de proceso, la salida de control y el modo de operación. También se observa la tendencia del lazo, útil para evaluar si la PV se acerca al SP, si existen oscilaciones y si la CV permanece dentro de un rango operativo razonable.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figuras/hmi_operacion_estable.jpeg}
+\caption{Condición de operación estable del lazo PID después de la sintonización}
+\label{fig:hmi_estable}
+\end{figure}
+
+La Figura \ref{fig:hmi_estable} muestra una condición de operación estable después de la sintonización. La PV se mantiene cercana al set point y la salida del controlador se conserva en un valor intermedio, lo cual indica que la válvula no se encuentra saturada y todavía tiene capacidad para corregir perturbaciones en la entrada o salida de aire.
+
+% -----------------------------------------------------------
+\subsection*{Prueba de Límites del Sistema}
+
+Finalmente se comprobaron los límites del sistema buscando un valor de set point que el banco fuera incapaz de alcanzar. Para ello se realizaron distintas pruebas, principalmente dentro del rango de 30 a 40 psia, donde el controlador podía funcionar adecuadamente. Al incrementar la exigencia del set point por encima de la capacidad disponible de entrada de aire, la variable de proceso dejaba de alcanzar el valor deseado y la salida del controlador tendía a elevarse, indicando que la válvula se aproximaba a su límite de acción.
+
+Esta prueba permitió distinguir entre un problema de sintonía y una limitación física del proceso. Cuando la válvula, la presión de suministro o el flujo disponible no son suficientes, el controlador puede aumentar la salida, pero la PV no necesariamente alcanzará el SP. En ese caso, el error permanente no se corrige ajustando únicamente los parámetros PID, sino revisando la capacidad del sistema.
+
+% -----------------------------------------------------------
+\subsection*{Interpretación de la Respuesta del Controlador}
+
+La respuesta observada indica que los parámetros de sintonía fueron adecuados para mantener una buena relación entre la variable de proceso, la variable de control y el set point. La etapa manual permitió encontrar una región de operación estable, mientras que el modo automático permitió comprobar que el PID podía corregir perturbaciones y sostener la presión deseada en el tanque pulmón.
+
+Las siguientes gráficas representan de forma cualitativa el comportamiento observado durante la práctica: operación estable en el rango útil, corrección de la salida de control y pérdida de capacidad cuando se exige un set point fuera del alcance del sistema.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.92\textwidth,
+    height=6.2cm,
+    grid=major,
+    xlabel={Tiempo [min]},
+    ylabel={Presión [psia]},
+    ymin=25,
+    ymax=46,
+    xmin=0,
+    xmax=20,
+    legend pos=south east,
+    tick align=outside
+]
+\addplot[controlgreen, dotted, thick] coordinates {
+    (0,30) (5,30) (5,35) (10,35) (10,40) (15,40) (15,45) (20,45)
+};
+\addlegendentry{SP}
+\addplot[uaqblue, thick, mark=*] coordinates {
+    (0,28) (1,29.2) (2,29.8) (3,30.1) (4,30.0) (5,30.0)
+    (6,32.4) (7,34.0) (8,35.1) (9,35.0) (10,35.0)
+    (11,37.2) (12,39.1) (13,40.0) (14,39.8) (15,40.0)
+    (16,41.0) (17,41.6) (18,41.8) (19,41.7) (20,41.8)
+};
+\addlegendentry{PV}
+\end{axis}
+\end{tikzpicture}
+\caption{Respuesta cualitativa de la presión ante cambios de set point y prueba de límite}
+\label{fig:presion_lab}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.92\textwidth,
+    height=6.2cm,
+    grid=major,
+    xlabel={Tiempo [min]},
+    ylabel={Salida del controlador [\%]},
+    ymin=20,
+    ymax=105,
+    xmin=0,
+    xmax=20,
+    legend pos=north west,
+    tick align=outside
+]
+\addplot[controlgreen, thick, mark=square*] coordinates {
+    (0,35) (1,42) (2,45) (3,44) (4,43) (5,43)
+    (6,55) (7,62) (8,60) (9,58) (10,58)
+    (11,70) (12,76) (13,74) (14,72) (15,72)
+    (16,88) (17,96) (18,100) (19,100) (20,100)
+};
+\addlegendentry{CV}
+\end{axis}
+\end{tikzpicture}
+\caption{Comportamiento cualitativo de la variable de control ante mayor exigencia de presión}
+\label{fig:salida_controlador}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.92\textwidth,
+    height=6.2cm,
+    grid=major,
+    xlabel={Tiempo [min]},
+    ylabel={Flujo relativo [\%]},
+    ymin=0,
+    ymax=110,
+    xmin=0,
+    xmax=20,
+    legend pos=south east,
+    tick align=outside
+]
+\addplot[uaqblue, thick] coordinates {
+    (0,45) (5,45) (6,55) (10,55) (11,65) (15,65) (16,80) (20,80)
+};
+\addlegendentry{Entrada por rotámetro}
+\addplot[red, dashed, thick] coordinates {
+    (0,40) (5,40) (6,50) (10,50) (11,60) (15,60) (16,85) (20,85)
+};
+\addlegendentry{Salida por rotámetro}
+\end{axis}
+\end{tikzpicture}
+\caption{Cambios relativos de entrada y salida de aire usados para modificar la dinámica del sistema}
+\label{fig:flujos_lab}
+\end{figure}
+
+\newpage
+
+% ============================================================
+% CUESTIONARIO
+% ============================================================
+\section*{Cuestionario}
+
+\subsection*{1.- ¿En qué se basa o justifica la selección de los parámetros de cualquier sistema de control y cómo deberían ser los resultados obtenidos?}
+
+La selección de parámetros de un sistema de control se justifica con base en la dinámica del proceso, el objetivo operativo, las restricciones de seguridad, el tipo de perturbaciones y la calidad de la medición. No existe una única combinación universal de $K_c$, $T_i$ y $T_d$; los parámetros deben seleccionarse de acuerdo con el comportamiento real del proceso.
+
+En un lazo de presión como el del tanque pulmón, los parámetros se justifican por:
+
+\begin{itemize}[itemsep=0.3em]
+    \item La rapidez con la que cambia la presión ante variaciones de demanda.
+    \item El volumen disponible del tanque y de la tubería.
+    \item La capacidad de la válvula de suministro.
+    \item El margen permitido antes de activar alarma o paro.
+    \item La presencia de ruido en la medición del transmisor.
+    \item El tiempo muerto del sistema neumático y del actuador.
+\end{itemize}
+
+Los resultados esperados deben mostrar estabilidad, presión cercana al punto de ajuste, recuperación ante perturbaciones, ausencia de oscilaciones sostenidas y una salida de controlador dentro de su rango normal de operación. En la práctica física, el sistema debía mantener la presión del tanque pulmón en el set point seleccionado, principalmente dentro del rango de 30--40 psia. Si el set point se colocaba fuera de la capacidad física del banco, la salida del controlador aumentaba, pero la variable de proceso no lograba alcanzar el valor deseado.
+
+\subsection*{2.- Reporte escrito de toda la práctica}
+
+El presente documento integra el marco conceptual de controladores, la selección del tipo de controlador, la configuración de parámetros PI, el dimensionamiento del tanque pulmón de nitrógeno, la práctica física realizada en el sistema de tanques de aire, la evidencia fotográfica del montaje, el uso del DCS DeltaV y las gráficas de comportamiento del sistema.
+
+\subsection*{3.- Conclusiones}
+
+El controlador es el elemento que permite transformar la medición de una variable de proceso en una acción correctiva sobre el elemento final de control. En sistemas de presión con tanque pulmón, el control PI es una opción adecuada porque combina respuesta proporcional con eliminación del error permanente, sin introducir la sensibilidad al ruido propia de la acción derivativa.
+
+El análisis del caso teórico muestra que el margen de caída permitido, equivalente a solo 3\% de 115 psig, es muy pequeño para sostener un consumo de 40,000 SCFH durante 10 minutos únicamente con almacenamiento. El volumen calculado de aproximadamente 812.8 m$^3$ indica que el tanque pulmón no debe diseñarse como la única fuente de autonomía, sino como un elemento amortiguador complementado por un suministro continuo con capacidad suficiente.
+
+La capacidad del suministro, de 80,000 SCFH, es el doble de la demanda nominal. Esto permite que el sistema pueda mantener la presión siempre que la válvula de control, el controlador y la estrategia de arranque estén correctamente configurados. La protección contra paro por baja presión debe lograrse mediante reserva de capacidad, arranque gradual, alarmas preventivas y ajuste adecuado del lazo.
+
+En la práctica física se comprobó que el control de presión depende tanto de la sintonización del PID como de la capacidad real del proceso. El ajuste manual de los rotámetros permitió modificar la dinámica del sistema y encontrar una región donde la salida de control pudiera actuar sin saturarse. Después, al pasar el controlador a modo automático, el DCS DeltaV mantuvo la presión del tanque pulmón cercana al set point mediante la acción sobre el transductor I/P y la válvula de entrada de aire.
+
+La prueba de límites mostró que, cuando se solicita un set point fuera de la capacidad del sistema, el controlador puede incrementar la salida pero no necesariamente lograr que la PV alcance el SP. Por ello, una buena respuesta de control requiere una relación adecuada entre PV, CV y SP, además de una instalación física con suficiente presión de suministro, rango de válvula y ajuste correcto de entrada y salida de aire.
+
+\newpage
+
+\begin{thebibliography}{99}
+
+\bibitem{smith2006}
+Smith, C. A. y Corripio, A. B., \textit{Principles and Practice of Automatic Process Control}, 3rd edition, John Wiley \& Sons, Hoboken, NJ, USA, 2006.
+
+\bibitem{ogata2010}
+Ogata, K., \textit{Modern Control Engineering}, 5th edition, Prentice Hall, Upper Saddle River, NJ, USA, 2010.
+
+\bibitem{creus2010}
+Creus Solé, A., \textit{Instrumentación Industrial}, 8a edición, Marcombo, Barcelona, España, 2010.
+
+\bibitem{liptak2006}
+Lipták, B. G., \textit{Instrument Engineers' Handbook: Process Measurement and Analysis}, 4th edition, CRC Press, Boca Raton, FL, USA, 2003.
+
+\bibitem{isa51}
+ANSI/ISA-5.1-2009, \textit{Instrumentation Symbols and Identification}, International Society of Automation (ISA), Research Triangle Park, NC, USA, 2009.
+
+\end{thebibliography}
+
+\end{document}
